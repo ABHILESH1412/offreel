@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">offreel</string>
+    <string name="capture_service_label">offreel save button</string>
+    <string name="capture_service_description">Shows the offreel save button while Instagram is open. When you tap it, offreel reads what is on screen in Instagram only, presses Share and Copy link for you (covering the screen with a still picture of the reel while it does), and reads that link from the clipboard so the reel can be saved to your phone. Nothing is read or done in any other app, and nothing leaves your phone except the download of the reel you chose.</string>
+</resources>

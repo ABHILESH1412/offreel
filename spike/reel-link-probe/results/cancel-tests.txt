@@ -1,0 +1,14 @@
+--------- beginning of main
+11-19 03:45:18.169 27778 27778 I OFFREEL_PROBE: RESULT run=1 status=ABORT user-tapped-cancel author=architmeher   url=null total=850ms mask=true steps=0ms:unfocusedRead=null | 47ms:clickOK@lvl0 chain=0direct_share_button[C]  | 47ms:shareClick(id)=true | 629ms:found | 644ms:clickOK@lvl2 chain=0button[C] 1button_container 2?[C]  | 644ms:copyClick=true | 
+11-19 03:45:18.492 27778 27778 I OFFREEL_PROBE: leftover sheet: open, Dismiss click=true (attempt 1)
+11-19 03:45:19.036 27778 27778 I OFFREEL_PROBE: leftover sheet: CLOSED (attempt 2)
+11-19 03:45:22.091 27778 27778 I OFFREEL_PROBE: RESULT run=2 status=ABORT user-tapped-cancel author=architmeher   url=null total=1354ms mask=true steps=1ms:unfocusedRead=null | 68ms:clickOK@lvl0 chain=0direct_share_button[C]  | 68ms:shareClick(id)=true | 982ms:found | 1040ms:clickOK@lvl2 chain=0button[C] 1button_container 2?[C]  | 1040ms:copyClick=true | 
+11-19 03:45:22.430 27778 27778 I OFFREEL_PROBE: leftover sheet: open, Dismiss click=true (attempt 1)
+11-19 03:45:23.059 27778 27778 I OFFREEL_PROBE: leftover sheet: CLOSED (attempt 2)
+11-19 03:45:26.675 27778 27778 I OFFREEL_PROBE: RESULT run=3 status=ABORT share-sheet-closed author=architmeher   url=null total=2024ms mask=true steps=2ms:unfocusedRead=null | 98ms:clickOK@lvl0 chain=0direct_share_button[C]  | 98ms:shareClick(id)=true | 854ms:found | 880ms:clickOK@lvl2 chain=0button[C] 1button_container 2?[C]  | 880ms:copyClick=true | 
+11-19 03:45:27.223 27778 27778 I OFFREEL_PROBE: leftover sheet: CLOSED (attempt 1)
+11-19 03:45:29.721 27778 27778 I OFFREEL_PROBE: RESULT run=4 status=ABORT left-instagram_top=com.motorola.launcher3 author=architmeher   url=null total=1070ms mask=true steps=1ms:unfocusedRead=null | 73ms:clickOK@lvl0 chain=0direct_share_button[C]  | 73ms:shareClick(id)=true | 719ms:found | 741ms:clickOK@lvl2 chain=0button[C] 1button_container 2?[C]  | 741ms:copyClick=true | 
+11-19 03:45:29.730 27778 27778 I OFFREEL_PROBE: button HIDDEN (top=com.motorola.launcher3)
+11-19 03:45:32.309 27778 27778 I OFFREEL_PROBE: button SHOWN (top=com.instagram.android)
+11-19 03:45:32.626 27778 27778 I OFFREEL_PROBE: leftover sheet: open, Dismiss click=true (attempt 1)
+11-19 03:45:33.162 27778 27778 I OFFREEL_PROBE: leftover sheet: CLOSED (attempt 2)
