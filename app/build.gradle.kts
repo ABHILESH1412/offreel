@@ -4,6 +4,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Release version: CI passes -PversionName=1.2.3 (from the release tag). versionCode is derived
+// from it (1.2.3 -> 10203) so every release installs over the previous one.
+val releaseVersionName = (findProperty("versionName") as String?)?.removePrefix("v") ?: "0.1.0"
+val releaseVersionCode = releaseVersionName.split('.', '-').take(3).mapNotNull { it.toIntOrNull() }
+    .let { p -> (p.getOrElse(0) { 0 } * 10000) + (p.getOrElse(1) { 0 } * 100) + p.getOrElse(2) { 0 } }
+    .coerceAtLeast(1)
+
 android {
     namespace = "dev.offreel"
     compileSdk = 37
@@ -12,12 +19,27 @@ android {
         applicationId = "io.github.abhilesh1412.offreel"
         minSdk = 29
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
 
         ndk {
             // yt-dlp ships a Python runtime per ABI; phones only need arm64.
             abiFilters += listOf("arm64-v8a")
+        }
+    }
+
+    // Release signing comes from environment variables (GitHub Actions secrets, see docs/releasing.md):
+    //   OFFREEL_KEYSTORE (path to the .jks), OFFREEL_STORE_PASSWORD, OFFREEL_KEY_ALIAS, OFFREEL_KEY_PASSWORD.
+    // Without them, release builds use the debug key: fine for trying on your own phone, never for publishing.
+    val releaseKeystore = System.getenv("OFFREEL_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("OFFREEL_STORE_PASSWORD")
+                keyAlias = System.getenv("OFFREEL_KEY_ALIAS") ?: "offreel"
+                keyPassword = System.getenv("OFFREEL_KEY_PASSWORD") ?: System.getenv("OFFREEL_STORE_PASSWORD")
+            }
         }
     }
 
@@ -27,8 +49,11 @@ android {
             applicationIdSuffix = ".dev"
         }
         release {
-            signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            // R8 drops unused code (mostly the big icon set): ~130 MB debug APK -> much smaller release.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 

@@ -1,0 +1,77 @@
+# offreel for Android, built on GitHub's machines (so a laptop with little RAM never has to).
+#
+# - A push to main (or a pull request) builds a debug APK, to catch mistakes.
+# - A published release builds the signed, shrunk release APK and attaches it to that release
+#   as offreel-<version>.apk. The version comes from the release tag (v0.2.0 -> 0.2.0).
+#
+# Secrets (Settings -> Secrets and variables -> Actions), see docs/releasing.md:
+#   OFFREEL_KEYSTORE_BASE64   base64 of the release keystore (scripts/make-release-key.sh)
+#   OFFREEL_STORE_PASSWORD    its password
+
+name: Android app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v4
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build (check)
+        if: github.event_name != 'release'
+        run: ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Build the signed release APK
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          OFFREEL_KEYSTORE_BASE64: ${{ secrets.OFFREEL_KEYSTORE_BASE64 }}
+          OFFREEL_STORE_PASSWORD: ${{ secrets.OFFREEL_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$OFFREEL_KEYSTORE_BASE64" ] || [ -z "$OFFREEL_STORE_PASSWORD" ]; then
+            echo "::error::Release signing secrets are missing; see docs/releasing.md"
+            exit 1
+          fi
+          export OFFREEL_KEYSTORE="$RUNNER_TEMP/offreel-release.jks"
+          echo "$OFFREEL_KEYSTORE_BASE64" | base64 -d > "$OFFREEL_KEYSTORE"
+          ./gradlew --no-daemon :app:assembleRelease -PversionName="${TAG#v}"
+          rm -f "$OFFREEL_KEYSTORE"
+
+      - name: Attach the APK to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          name="offreel-${TAG#v}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$name"
+          gh release upload "$TAG" "$name" --clobber
+
+      - name: Keep the debug APK for this run
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v7
+        with:
+          name: offreel-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
