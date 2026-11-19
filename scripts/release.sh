@@ -36,9 +36,11 @@ die() { echo "✗ $*" >&2; exit 1; }
 say() { echo "• $*"; }
 
 command -v gh >/dev/null || die "The GitHub CLI (gh) is needed: https://cli.github.com"
-gh auth status >/dev/null 2>&1 || die "Log in to GitHub first: gh auth login"
+# None of the git/gh calls below may read the keyboard: anything typed early belongs to the
+# "Publish?" question, not to them.
+gh auth status </dev/null >/dev/null 2>&1 || die "Log in to GitHub first: gh auth login"
 
-repo="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)" || die "No GitHub repository for this folder"
+repo="$(gh repo view --json nameWithOwner -q .nameWithOwner </dev/null 2>/dev/null)" || die "No GitHub repository for this folder"
 
 # ---- the working tree must be clean, on main, and in sync with GitHub ----
 branch="$(git rev-parse --abbrev-ref HEAD)"
@@ -50,12 +52,12 @@ fi
 [ -f .github/workflows/android.yml ] || die ".github/workflows/android.yml is missing; GitHub wouldn't build an APK."
 
 say "Checking GitHub…"
-git fetch --quiet --tags origin main
+git fetch --quiet --tags origin main </dev/null
 behind="$(git rev-list --count HEAD..origin/main)"
 ahead="$(git rev-list --count origin/main..HEAD)"
 [ "$behind" -eq 0 ] || die "main is $behind commit(s) behind GitHub. Run: git pull"
 
-secrets="$(gh secret list --repo "$repo" 2>/dev/null | cut -f1 || true)"
+secrets="$(gh secret list --repo "$repo" </dev/null 2>/dev/null | cut -f1 || true)"
 for s in OFFREEL_KEYSTORE_BASE64 OFFREEL_STORE_PASSWORD; do
     grep -qx "$s" <<<"$secrets" || die "GitHub secret $s is missing; see docs/releasing.md"
 done
@@ -83,8 +85,20 @@ echo "  Commit:    $(git log -1 --format='%h %s')"
 echo "  Repo:      $repo"
 echo
 if ! $assume_yes; then
-    read -r -p "Publish $tag? [y/N] " answer
-    [[ "$answer" =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
+    # Read the answer from the keyboard itself (not from anything piped or typed ahead), and
+    # accept y / yes in any case, ignoring stray spaces or a carriage return from the terminal.
+    answer=""
+    if { exec 3</dev/tty; } 2>/dev/null; then
+        read -r -u 3 -p "Publish $tag? [y/N] " answer || true
+        exec 3<&-
+    else
+        read -r -p "Publish $tag? [y/N] " answer || true
+    fi
+    answer="$(printf '%s' "$answer" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+    if [[ "$answer" != "y" && "$answer" != "yes" ]]; then
+        echo "Cancelled${answer:+ (you answered '$answer'; type y and press Enter to publish)}."
+        exit 0
+    fi
 fi
 
 # ---- publish ----
@@ -93,7 +107,7 @@ if [ "$ahead" -gt 0 ]; then
     git push --quiet origin main
 fi
 say "Creating release $tag…"
-url="$(gh release create "$tag" --target "$(git rev-parse HEAD)" --title "offreel $next" --generate-notes)"
+url="$(gh release create "$tag" </dev/null --target "$(git rev-parse HEAD)" --title "offreel $next" --generate-notes)"
 echo "  $url"
 
 if ! $wait_for_build; then
