@@ -93,6 +93,8 @@ import dev.offreel.ui.common.isInstagramHandle
 import dev.offreel.ui.common.openInstagramProfile
 import dev.offreel.ui.common.shareVideos
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.foundation.border
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import dev.offreel.ui.common.Thumb
@@ -297,13 +299,28 @@ private fun ReelPage(
             reel.author?.let { author ->
                 val context = LocalContext.current
                 // Tap the @handle to open the creator's profile in Instagram (or the reel, if we only know a display name).
-                Text(
-                    "@$author", color = Brand.Cream, style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.clickable {
-                        if (isInstagramHandle(author)) openInstagramProfile(context, author) else openInInstagram(context, reel.url)
-                    },
-                )
+                // A pill, so it reads as a button: opens the creator's profile in Instagram.
+                Row(
+                    Modifier
+                        .clip(CircleShape)
+                        .background(Brand.Cream.copy(alpha = 0.14f))
+                        .border(1.dp, Brand.Cream.copy(alpha = 0.28f), CircleShape)
+                        .clickable {
+                            if (isInstagramHandle(author)) openInstagramProfile(context, author) else openInInstagram(context, reel.url)
+                        }
+                        .padding(start = 12.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "@$author", color = Brand.Cream, style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Icon(
+                        Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Open in Instagram",
+                        tint = Brand.Cream.copy(alpha = 0.8f), modifier = Modifier.size(14.dp),
+                    )
+                }
             }
             reel.caption?.takeIf { it.isNotBlank() }?.let { caption ->
                 var expanded by remember(reel.id) { mutableStateOf(false) }
