@@ -21,6 +21,9 @@ Android only. Not affiliated with Instagram or Meta.
   to seek, tap the caption to read it all.
 - **Feed.** Everything you saved, shuffled, or only the groups you pick.
 - **Save to gallery.** Copy any reel (or all new ones, in Settings) to *Movies/offreel*.
+- **Share** a saved video (or several) to WhatsApp, Instagram, Telegram or any app.
+- **Tap the @handle** under a reel to open that account in Instagram.
+- **Updates itself** from this repository's releases (can be turned off).
 - **Light and dark theme**, video quality (720p / 1080p / best), Wi-Fi-only downloads.
 
 ## Install
@@ -28,18 +31,32 @@ Android only. Not affiliated with Instagram or Meta.
 1. On your phone, open the **[latest release](../../releases/latest)** and download
    `offreel-<version>.apk`.
 2. Open the file. Android asks you to allow installing apps from your browser the first time; allow it.
-3. Open offreel and tap **Open settings** on the card at the top, then switch on
+3. **If Google Play Protect blocks the install** ("App blocked" / "unsafe app"), it's because offreel
+   isn't from the Play Store. To install it anyway:
+   1. Open the **Play Store**, tap your **profile icon** (top right) → **Play Protect** →
+      **⚙ settings** (top right).
+   2. Turn off **Scan apps with Play Protect**.
+   3. Open the APK again and install it.
+   4. Go back to the same setting and turn **Scan apps with Play Protect** on again.
+4. **Allow restricted settings.** Long-press the offreel icon → **App info** → **⋮** (top right) →
+   **Allow restricted settings**. Android requires this for every app from outside the Play Store
+   before its accessibility service can be switched on.
+5. Open offreel and tap **Open settings** on the card at the top, then switch on
    **offreel save button** (Settings → Accessibility).
-   If the switch is greyed out: *Settings → Apps → offreel → ⋮ → Allow restricted settings*,
-   then try again. Android does this for every app installed from outside the Play Store.
-4. Open Instagram. The round offreel button appears on the right edge. Drag it anywhere you like.
+6. Open Instagram. The round offreel button appears on the right edge. Drag it anywhere you like.
+   Now you can use offreel.
 
 Needs Android 10 or newer (Android 11+ recommended) and an arm64 phone (practically all phones
 from the last several years).
 
 ### Updating
 
-Download and open the newer APK; it installs over the old one and keeps your saved reels.
+offreel updates itself: when a new version is released here, it downloads and installs it (about
+twice a day it checks, and whenever you open the app). Turn this off or check by hand in
+**Settings → Updates**. The first time, Android asks you to allow offreel to install apps; after
+that, Android 12 and newer install updates without asking. Your saved reels are kept.
+
+You can also download a newer APK yourself and open it; it installs over the old one.
 
 ## How to use it
 

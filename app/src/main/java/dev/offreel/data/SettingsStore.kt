@@ -38,6 +38,9 @@ data class Settings(
     val autoGallery: Boolean = false,
     /** Groups the Feed plays from; empty means all groups. */
     val feedGroupIds: Set<Long> = emptySet(),
+    /** Download and install new GitHub releases automatically. */
+    val autoUpdate: Boolean = true,
+    val lastUpdateCheck: Long = 0,
 )
 
 class SettingsStore(private val context: Context) {
@@ -53,6 +56,8 @@ class SettingsStore(private val context: Context) {
         val groupGrid = booleanPreferencesKey("group_grid")
         val autoGallery = booleanPreferencesKey("auto_gallery")
         val feedGroups = stringPreferencesKey("feed_groups")
+        val autoUpdate = booleanPreferencesKey("auto_update")
+        val lastUpdateCheck = longPreferencesKey("last_update_check")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map { it.toSettings() }
@@ -71,6 +76,8 @@ class SettingsStore(private val context: Context) {
         groupGrid = this[K.groupGrid] ?: true,
         autoGallery = this[K.autoGallery] ?: false,
         feedGroupIds = this[K.feedGroups]?.split(',')?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet(),
+        autoUpdate = this[K.autoUpdate] ?: true,
+        lastUpdateCheck = this[K.lastUpdateCheck] ?: 0,
     )
 
     suspend fun setTheme(v: ThemeMode) = context.dataStore.edit { it[K.theme] = v.name }
@@ -85,6 +92,8 @@ class SettingsStore(private val context: Context) {
         it.remove(K.buttonY); it.remove(K.buttonOnLeft)
     }
     suspend fun setLastGroup(id: Long) = context.dataStore.edit { it[K.lastGroupId] = id }
+    suspend fun setAutoUpdate(v: Boolean) = context.dataStore.edit { it[K.autoUpdate] = v }
+    suspend fun setLastUpdateCheck(t: Long) = context.dataStore.edit { it[K.lastUpdateCheck] = t }
     suspend fun setAutoGallery(v: Boolean) = context.dataStore.edit { it[K.autoGallery] = v }
     suspend fun setFeedGroups(ids: Set<Long>) = context.dataStore.edit { it[K.feedGroups] = ids.joinToString(",") }
     suspend fun setGroupGrid(v: Boolean) = context.dataStore.edit { it[K.groupGrid] = v }

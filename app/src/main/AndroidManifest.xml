@@ -7,6 +7,11 @@
     <!-- Android 10–11 only: expedited downloads run as a short foreground service there. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Self-update from GitHub releases (Settings -> Updates). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- Only for "update ready, tap to install" when Android insists on asking. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- "Open in Instagram" -->
     <queries>
@@ -63,6 +68,21 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/capture_service" />
         </service>
+
+        <receiver
+            android:name=".update.UpdateInstallReceiver"
+            android:exported="false" />
+
+        <!-- Lets other apps read a saved video only when the user shares it. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/shared_files" />
+        </provider>
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

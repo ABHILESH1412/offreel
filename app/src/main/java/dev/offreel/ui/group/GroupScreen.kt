@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.SaveAlt
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -74,6 +75,7 @@ import dev.offreel.ui.common.GroupPickerDialog
 import dev.offreel.ui.common.DeleteGroupsDialog
 import dev.offreel.ui.common.OffreelMark
 import dev.offreel.ui.common.SelectionMark
+import dev.offreel.ui.common.shareVideos
 import dev.offreel.ui.home.NameDialog
 import dev.offreel.ui.common.Thumb
 import dev.offreel.ui.common.openInInstagram
@@ -150,6 +152,7 @@ fun GroupScreen(groupId: Long, onBack: () -> Unit) {
         removeHere = { r -> scope.launch { repo.removeFromGroup(r.id, groupId); toast("Removed from $title") } },
         delete = { action = GroupAction.Delete(setOf(it.id)) },
         saveToGallery = { r -> scope.launch { toast(GalleryExport.saveAll(context, listOf(r))) } },
+        share = { r -> shareVideos(context, listOf(r)) },
     )
 
     val grid = settings?.groupGrid ?: true
@@ -165,6 +168,11 @@ fun GroupScreen(groupId: Long, onBack: () -> Unit) {
                     selected = emptySet()
                     scope.launch { toast(GalleryExport.saveAll(context, picked)) }
                 }) { Icon(Icons.Rounded.SaveAlt, "Save to gallery") }
+                IconButton(onClick = {
+                    val picked = list.filter { it.id in selected }
+                    selected = emptySet()
+                    shareVideos(context, picked)
+                }) { Icon(Icons.Rounded.Share, "Share videos") }
                 IconButton(onClick = { action = GroupAction.Move(selected) }) {
                     Icon(Icons.AutoMirrored.Rounded.DriveFileMove, "Move to another group")
                 }
@@ -305,6 +313,7 @@ private class ReelMenuActions(
     val removeHere: (ReelEntity) -> Unit,
     val delete: (ReelEntity) -> Unit,
     val saveToGallery: (ReelEntity) -> Unit,
+    val share: (ReelEntity) -> Unit,
 )
 
 @Composable
@@ -328,6 +337,7 @@ private fun ReelMenuButton(reel: ReelEntity, menu: ReelMenuActions, onImage: Boo
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             DropdownMenuItem(text = { Text("Move to…") }, onClick = { open = false; menu.move(reel) })
             DropdownMenuItem(text = { Text("Also add to…") }, onClick = { open = false; menu.addTo(reel) })
+            DropdownMenuItem(text = { Text("Share video") }, onClick = { open = false; menu.share(reel) })
             DropdownMenuItem(text = { Text("Save to gallery") }, onClick = { open = false; menu.saveToGallery(reel) })
             DropdownMenuItem(text = { Text("Open in Instagram") }, onClick = { open = false; menu.openInInstagram(reel) })
             DropdownMenuItem(text = { Text("Remove from this group") }, onClick = { open = false; menu.removeHere(reel) })

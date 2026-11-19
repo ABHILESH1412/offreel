@@ -21,6 +21,8 @@ android {
         targetSdk = 37
         versionCode = releaseVersionCode
         versionName = releaseVersionName
+        // Where the app looks for updates. Forks: change this to your own "owner/repo".
+        buildConfigField("String", "UPDATE_REPO", "\"ABHILESH1412/offreel\"")
 
         ndk {
             // yt-dlp ships a Python runtime per ABI; phones only need arm64.

@@ -47,13 +47,19 @@ fun DeleteGroupsDialog(
                 if (reelCount == 0) {
                     Text(if (names.size == 1) "The group is empty." else "These groups are empty.")
                 } else {
+                    val videos = if (reelCount == 1) "1 video" else "$reelCount videos"
                     Text(
-                        "What should happen to the ${if (reelCount == 1) "reel" else "$reelCount reels"} inside? " +
-                            "Reels that are also in another group stay there either way."
+                        "${if (names.size == 1) "It has" else "They have"} $videos inside. Delete only the " +
+                            "${if (names.size == 1) "group" else "groups"}, or the videos too? " +
+                            "Videos that are also in another group stay there either way."
                     )
                     Spacer(Modifier.height(16.dp))
                     OutlinedButton(onClick = { onDelete(true) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
-                        Text("Keep the reels (move to Default)", color = MaterialTheme.colorScheme.onSurface)
+                        Text(
+                            if (names.size == 1) "Delete only the group (videos move to Default)"
+                            else "Delete only the groups (videos move to Default)",
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
@@ -61,7 +67,7 @@ fun DeleteGroupsDialog(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    ) { Text("Delete the reels too") }
+                    ) { Text(if (names.size == 1) "Delete the group and its videos" else "Delete the groups and their videos") }
                 }
             }
         },

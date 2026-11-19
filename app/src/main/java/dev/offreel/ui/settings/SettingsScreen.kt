@@ -36,6 +36,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yausername.youtubedl_android.YoutubeDL
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import dev.offreel.update.UpdateWorker
+import dev.offreel.update.Updates
 import dev.offreel.BuildConfig
 import dev.offreel.data.Quality
 import dev.offreel.download.Ytdl
@@ -119,6 +129,15 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 title = "Button position", subtitle = "Drag the button to move it; this puts it back",
                 action = "Reset", onClick = { scope.launch { store.resetButtonPosition() } },
             )
+        }
+
+        Section("Updates") {
+            UpdatesSection(autoUpdate = settings.autoUpdate, onAutoUpdate = { on ->
+                scope.launch {
+                    store.setAutoUpdate(on)
+                    UpdateWorker.schedule(context, store.current())
+                }
+            })
         }
 
         Section("Downloader") {
@@ -232,4 +251,61 @@ private fun ActionRow(title: String, subtitle: String, action: String? = null, o
         }
         if (action != null) OutlinedButton(onClick = onClick) { Text(action, color = MaterialTheme.colorScheme.onSurface) }
     }
+}
+
+
+@Composable
+private fun UpdatesSection(autoUpdate: Boolean, onAutoUpdate: (Boolean) -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val status by Updates.status.collectAsStateWithLifecycle()
+    var canInstall by remember { mutableStateOf(Updates.canInstallPackages(context)) }
+    LifecycleResumeEffect(Unit) {
+        canInstall = Updates.canInstallPackages(context)
+        onPauseOrDispose { }
+    }
+    // "Update ready, tap to install" needs notification permission on Android 13+.
+    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    SwitchRow(
+        title = "Automatic updates",
+        subtitle = "Checks GitHub about twice a day and installs new versions of offreel",
+        checked = autoUpdate,
+        onChange = { on ->
+            onAutoUpdate(on)
+            if (on && Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        },
+    )
+    if (Updates.canInstall && !canInstall) {
+        ActionRow(
+            title = "Allow offreel to install updates",
+            subtitle = "Needed once. Android then installs offreel updates without asking (Android 12+).",
+            action = "Allow",
+            onClick = {
+                context.startActivity(
+                    Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}"))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            },
+        )
+    }
+    val busy = status is Updates.Status.Checking || status is Updates.Status.Downloading || status is Updates.Status.Installing
+    ActionRow(
+        title = "Version ${BuildConfig.VERSION_NAME}",
+        subtitle = when (val s = status) {
+            Updates.Status.Idle -> if (Updates.canInstall) "From github.com/${Updates.REPO}" else
+                "Development build: updates apply to the app installed from GitHub releases"
+            Updates.Status.Checking -> "Checking…"
+            is Updates.Status.UpToDate -> "Up to date"
+            is Updates.Status.Available -> if (Updates.canInstall) "Version ${s.version} is ready. Tap Check now to install it" else
+                "Version ${s.version} is on GitHub (install it from the release page)"
+            is Updates.Status.Downloading -> "Downloading ${s.version}… ${s.percent}%"
+            is Updates.Status.Installing -> "Installing ${s.version}…"
+            is Updates.Status.Failed -> s.message
+        },
+        action = if (busy) null else "Check now",
+        onClick = { scope.launch { Updates.checkAndInstall(context) } },
+    )
 }

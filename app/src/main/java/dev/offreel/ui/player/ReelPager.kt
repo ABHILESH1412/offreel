@@ -41,8 +41,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.VolumeOff
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -91,6 +89,12 @@ import dev.offreel.data.ReelStatus
 import dev.offreel.graph
 import dev.offreel.ui.common.GroupPickerDialog
 import dev.offreel.ui.common.OffreelMark
+import dev.offreel.ui.common.isInstagramHandle
+import dev.offreel.ui.common.openInstagramProfile
+import dev.offreel.ui.common.shareVideos
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import dev.offreel.ui.common.Thumb
 import dev.offreel.ui.common.openInInstagram
 import dev.offreel.ui.theme.Brand
@@ -290,8 +294,16 @@ private fun ReelPage(
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Brand.Ink.copy(alpha = 0.7f))))
                 .padding(start = 16.dp, end = 72.dp, top = 40.dp, bottom = 14.dp + bottomInset)
         ) {
-            reel.author?.let {
-                Text("@$it", color = Brand.Cream, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            reel.author?.let { author ->
+                val context = LocalContext.current
+                // Tap the @handle to open the creator's profile in Instagram (or the reel, if we only know a display name).
+                Text(
+                    "@$author", color = Brand.Cream, style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clickable {
+                        if (isInstagramHandle(author)) openInstagramProfile(context, author) else openInInstagram(context, reel.url)
+                    },
+                )
             }
             reel.caption?.takeIf { it.isNotBlank() }?.let { caption ->
                 var expanded by remember(reel.id) { mutableStateOf(false) }
@@ -332,7 +344,11 @@ private fun ReelPage(
         ) {
             if (reel.status == ReelStatus.READY) {
                 IconButton(onClick = onToggleMute) {
-                    Icon(if (muted) Icons.Rounded.VolumeOff else Icons.Rounded.VolumeUp, if (muted) "Unmute" else "Mute", tint = Brand.Cream)
+                    Icon(if (muted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp, if (muted) "Unmute" else "Mute", tint = Brand.Cream)
+                }
+                val context = LocalContext.current
+                IconButton(onClick = { shareVideos(context, listOf(reel)) }) {
+                    Icon(Icons.Rounded.Share, "Share video", tint = Brand.Cream)
                 }
             }
             ReelMenu(reel, groupId)
@@ -456,6 +472,7 @@ private fun ReelMenu(reel: ReelEntity, groupId: Long?) {
                 DropdownMenuItem(text = { Text("Move to…") }, onClick = { open = false; picker = "move" })
             }
             DropdownMenuItem(text = { Text("Also add to…") }, onClick = { open = false; picker = "add" })
+            DropdownMenuItem(text = { Text("Share video") }, onClick = { open = false; shareVideos(context, listOf(reel)) })
             DropdownMenuItem(text = { Text("Save to gallery") }, onClick = {
                 open = false; scope.launch { toast(GalleryExport.saveAll(context, listOf(reel))) }
             })

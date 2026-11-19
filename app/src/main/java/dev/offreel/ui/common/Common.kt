@@ -1,5 +1,6 @@
 package dev.offreel.ui.common
 
+import java.io.File
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
@@ -111,6 +112,43 @@ fun openInInstagram(context: Context, url: String) {
             Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
         }
     }
+}
+
+private val HANDLE = Regex("^[A-Za-z0-9._]{1,30}$")
+
+/** True when [author] looks like an Instagram @handle (not a display name with spaces). */
+fun isInstagramHandle(author: String?) = author != null && HANDLE.matches(author)
+
+/** Opens the creator's profile in Instagram (or the browser if Instagram isn't installed). */
+fun openInstagramProfile(context: Context, handle: String) =
+    openInInstagram(context, "https://www.instagram.com/$handle/")
+
+/**
+ * Shares saved videos (the files themselves) to any app: WhatsApp, Instagram, Telegram…
+ * Other apps get temporary read access to just these files through offreel's FileProvider.
+ */
+fun shareVideos(context: Context, reels: List<dev.offreel.data.ReelEntity>) {
+    val files = reels.mapNotNull { r -> r.videoPath?.let { File(it) }?.takeIf { it.exists() } }
+    if (files.isEmpty()) {
+        Toast.makeText(context, "Not downloaded yet", Toast.LENGTH_SHORT).show()
+        return
+    }
+    val authority = "${context.packageName}.files"
+    val uris = files.map { androidx.core.content.FileProvider.getUriForFile(context, authority, it) }
+    val send = if (uris.size == 1) {
+        Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, uris.first())
+    } else {
+        Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+    }.apply {
+        type = "video/mp4"
+        clipData = android.content.ClipData.newRawUri(null, uris.first()).also { c ->
+            uris.drop(1).forEach { c.addItem(android.content.ClipData.Item(it)) }
+        }
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    val chooser = Intent.createChooser(send, if (uris.size == 1) "Share video" else "Share ${uris.size} videos")
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    context.startActivity(chooser)
 }
 
 fun formatBytes(bytes: Long): String = when {

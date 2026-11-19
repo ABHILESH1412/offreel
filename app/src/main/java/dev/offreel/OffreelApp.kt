@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import dev.offreel.update.UpdateWorker
 
 class OffreelApp : Application() {
     lateinit var graph: AppGraph
@@ -19,6 +20,7 @@ class OffreelApp : Application() {
         super.onCreate()
         graph = AppGraph(this)
         graph.scope.launch { graph.repository.defaultGroupId() }   // make sure Default exists
+        graph.scope.launch { UpdateWorker.schedule(this@OffreelApp, graph.settings.current()) }
     }
 }
 

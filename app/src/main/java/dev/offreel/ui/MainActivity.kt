@@ -28,6 +28,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.offreel.graph
+import dev.offreel.update.UpdateWorker
+import dev.offreel.update.Updates
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import dev.offreel.ui.feed.FeedScreen
 import dev.offreel.ui.home.HomeScreen
 import dev.offreel.ui.group.GroupScreen
@@ -37,6 +41,17 @@ import dev.offreel.ui.theme.OffreelTheme
 import dev.offreel.ui.theme.ThemeMode
 
 class MainActivity : ComponentActivity() {
+    override fun onResume() {
+        super.onResume()
+        Updates.appVisible = true
+        lifecycleScope.launch { UpdateWorker.checkSoon(this@MainActivity, graph.settings.current()) }
+    }
+
+    override fun onPause() {
+        Updates.appVisible = false
+        super.onPause()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
